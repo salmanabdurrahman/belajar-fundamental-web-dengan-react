@@ -1,0 +1,17 @@
+{
+  "trailingComma": "es5",
+  "tabWidth": 2,
+  "printWidth": 80,
+  "requirePragma": false,
+  "useTabs": false,
+  "singleQuote": false,
+  "semi": true,
+  "[javascriptreact]": {
+    "singleQuote": false,
+    "singleAttributePerLine": true
+  },
+  "[html]": {
+    "singleQuote": false,
+    "singleAttributePerLine": false
+  }
+}

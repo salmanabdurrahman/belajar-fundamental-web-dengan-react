@@ -1,89 +1,109 @@
-import { useState } from "react";
+import { Component } from "react";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import withRouter from "../utils/withRouter";
 
-function AddNotePage({ onAddNote }) {
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [titleCharLimit] = useState(50);
-  const navigate = useNavigate();
+class AddNotePage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      title: "",
+      body: "",
+      titleCharLimit: 50,
+    };
+    this.bodyInputRef = null;
+  }
 
-  const handleBodyInput = (event) => {
-    setBody(event.target.innerHTML);
+  handleTitleChange = (e) => {
+    const value = e.target.value.slice(0, this.state.titleCharLimit);
+    this.setState({ title: value });
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  handleBodyInput = (e) => {
+    this.setState({ body: e.currentTarget.innerHTML });
+  };
 
-    if (title.trim() === "" || body.trim() === "") {
+  handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (this.state.title.trim() === "" || this.state.body.trim() === "") {
       alert("Judul dan isi catatan tidak boleh kosong!");
       return;
     }
 
-    onAddNote({ title, body });
-    navigate("/");
+    this.props.onAddNote({
+      title: this.state.title,
+      body: this.state.body,
+    });
+    this.props.navigate("/");
   };
 
-  const remainingChars = titleCharLimit - title.length;
+  render() {
+    const { title, titleCharLimit } = this.state;
+    const remainingChars = titleCharLimit - title.length;
 
-  return (
-    <div className="page">
-      <div className="add-note-page">
-        <h2 className="page__title">Buat Catatan Baru</h2>
-        <form className="add-note-page__form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="title" className="form-label">
-              Judul{" "}
-              <span className="char-limit">
-                ({remainingChars} karakter tersisa)
-              </span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              className="form-input"
-              placeholder="Contoh: Catatan penting hari ini"
-              value={title}
-              onChange={(e) =>
-                setTitle(e.target.value.slice(0, titleCharLimit))
-              }
-              required
-            />
-          </div>
+    return (
+      <div className="page">
+        <div className="add-note-page">
+          <h2 className="page__title">Buat Catatan Baru</h2>
+          <form className="add-note-page__form" onSubmit={this.handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="title" className="form-label">
+                Judul{" "}
+                <span className="char-limit">
+                  ({remainingChars} karakter tersisa)
+                </span>
+              </label>
+              <input
+                type="text"
+                id="title"
+                className="form-input"
+                placeholder="Contoh: Catatan penting hari ini"
+                value={title}
+                onChange={this.handleTitleChange}
+                required
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="body" className="form-label">
-              Isi Catatan
-            </label>
-            <div
-              id="body"
-              className="form-input form-input--editable"
-              contentEditable
-              onInput={handleBodyInput}
-              data-placeholder="Tuliskan catatan Anda di sini... (Anda bisa gunakan bold, italic, dll)"
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="body" className="form-label">
+                Isi Catatan
+              </label>
+              <div
+                id="body"
+                ref={(el) => {
+                  this.bodyInputRef = el;
+                }}
+                className="form-input form-input--editable"
+                contentEditable
+                onInput={this.handleBodyInput}
+                data-placeholder="Tuliskan catatan Anda di sini... (Anda bisa gunakan bold, italic, dll)"
+                suppressContentEditableWarning
+              />
+            </div>
 
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              Simpan Catatan
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate("/")}
-            >
-              Batal
-            </button>
-          </div>
-        </form>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">
+                Simpan Catatan
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => this.props.navigate("/")}
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 AddNotePage.propTypes = {
   onAddNote: PropTypes.func.isRequired,
+  navigate: PropTypes.func.isRequired,
 };
 
-export default AddNotePage;
+const AddNotePageWithRouter = withRouter(AddNotePage);
+export default AddNotePageWithRouter;

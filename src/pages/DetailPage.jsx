@@ -1,29 +1,12 @@
+import { Component } from "react";
 import PropTypes from "prop-types";
-import { useParams, useNavigate } from "react-router-dom";
 import parser from "html-react-parser";
+import withRouter from "../utils/withRouter";
 import DeleteButton from "../components/DeleteButton";
 import ArchiveButton from "../components/ArchiveButton";
 
-function DetailPage({ notes, onDelete, onArchive }) {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  const note = notes.find((note) => note.id === id);
-
-  if (!note) {
-    return (
-      <div className="page">
-        <div className="detail-page__not-found">
-          <h2>Catatan tidak ditemukan</h2>
-          <button className="btn btn-primary" onClick={() => navigate("/")}>
-            Kembali ke Beranda
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const formatDate = (dateString) => {
+class DetailPage extends Component {
+  formatDate = (dateString) => {
     const options = {
       weekday: "long",
       year: "numeric",
@@ -33,33 +16,56 @@ function DetailPage({ notes, onDelete, onArchive }) {
     return new Date(dateString).toLocaleDateString("id-ID", options);
   };
 
-  const handleDelete = (id) => {
-    onDelete(id);
-    navigate("/");
+  handleDelete = (id) => {
+    this.props.onDelete(id);
+    this.props.navigate("/");
   };
 
-  const handleArchive = (id) => {
-    onArchive(id);
-    navigate("/");
+  handleArchive = (id) => {
+    this.props.onArchive(id);
+    this.props.navigate("/");
   };
 
-  return (
-    <div className="page">
-      <div className="detail-page">
-        <h1 className="detail-page__title">{note.title}</h1>
-        <p className="detail-page__date">{formatDate(note.createdAt)}</p>
-        <div className="detail-page__body">{parser(note.body)}</div>
-        <div className="detail-page__actions">
-          <ArchiveButton
-            id={note.id}
-            archived={note.archived}
-            onArchive={handleArchive}
-          />
-          <DeleteButton id={note.id} onDelete={handleDelete} />
+  render() {
+    const { id } = this.props.params;
+    const { notes } = this.props;
+
+    const note = notes.find((note) => note.id === id);
+
+    if (!note) {
+      return (
+        <div className="page">
+          <div className="detail-page__not-found">
+            <h2>Catatan tidak ditemukan</h2>
+            <button
+              className="btn btn-primary"
+              onClick={() => this.props.navigate("/")}
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="page">
+        <div className="detail-page">
+          <h1 className="detail-page__title">{note.title}</h1>
+          <p className="detail-page__date">{this.formatDate(note.createdAt)}</p>
+          <div className="detail-page__body">{parser(note.body)}</div>
+          <div className="detail-page__actions">
+            <ArchiveButton
+              id={note.id}
+              archived={note.archived}
+              onArchive={this.handleArchive}
+            />
+            <DeleteButton id={note.id} onDelete={this.handleDelete} />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 DetailPage.propTypes = {
@@ -74,6 +80,9 @@ DetailPage.propTypes = {
   ).isRequired,
   onDelete: PropTypes.func.isRequired,
   onArchive: PropTypes.func.isRequired,
+  params: PropTypes.object.isRequired,
+  navigate: PropTypes.func.isRequired,
 };
 
-export default DetailPage;
+const DetailPageWithRouter = withRouter(DetailPage);
+export default DetailPageWithRouter;

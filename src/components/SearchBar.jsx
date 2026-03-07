@@ -1,34 +1,40 @@
+import { Component } from "react";
 import PropTypes from "prop-types";
-import { useSearchParams } from "react-router-dom";
+import withSearch from "../utils/withSearch";
 
-function SearchBar({ placeholder = "Cari catatan berdasarkan judul..." }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const keyword = searchParams.get("keyword") || "";
-
-  const handleSearch = (event) => {
-    const value = event.target.value;
+class SearchBar extends Component {
+  handleSearch = (e) => {
+    const value = e.target.value;
     if (value) {
-      setSearchParams({ keyword: value });
+      this.props.setSearchParams({ keyword: value });
     } else {
-      setSearchParams({});
+      this.props.setSearchParams({});
     }
   };
 
-  return (
-    <div className="search-bar">
-      <input
-        type="text"
-        className="search-bar__input"
-        placeholder={placeholder}
-        value={keyword}
-        onChange={handleSearch}
-      />
-    </div>
-  );
+  render() {
+    const { placeholder = "Cari catatan berdasarkan judul..." } = this.props;
+    const keyword = this.props.searchParams.get("keyword") || "";
+
+    return (
+      <div className="search-bar">
+        <input
+          type="text"
+          className="search-bar__input"
+          placeholder={placeholder}
+          value={keyword}
+          onChange={this.handleSearch}
+        />
+      </div>
+    );
+  }
 }
 
 SearchBar.propTypes = {
   placeholder: PropTypes.string,
+  searchParams: PropTypes.object.isRequired,
+  setSearchParams: PropTypes.func.isRequired,
 };
 
-export default SearchBar;
+const SearchBarWithSearch = withSearch(SearchBar);
+export default SearchBarWithSearch;

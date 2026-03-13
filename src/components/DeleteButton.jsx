@@ -1,18 +1,24 @@
 import PropTypes from "prop-types";
+import { useLocale } from "../contexts/LocaleContext";
 
-function DeleteButton({ id, onDelete }) {
+function DeleteButton({ id, onDelete, disabled = false }) {
+  const { t } = useLocale();
+
   return (
     <button
+      type="button"
       className="btn btn-delete"
       onClick={() => onDelete(id)}
-      title="Hapus catatan"
+      title={t("deleteNote")}
+      disabled={disabled}
     >
-      Hapus
+      {t("delete")}
     </button>
   );
 }
 
 DeleteButton.propTypes = {
+  disabled: PropTypes.bool,
   id: PropTypes.string.isRequired,
   onDelete: PropTypes.func.isRequired,
 };

@@ -1,88 +1,127 @@
-import { Component } from "react";
-import PropTypes from "prop-types";
+import { useCallback, useEffect, useState } from "react";
 import parser from "html-react-parser";
-import withRouter from "../utils/withRouter";
-import DeleteButton from "../components/DeleteButton";
+import { useNavigate, useParams } from "react-router-dom";
 import ArchiveButton from "../components/ArchiveButton";
+import DeleteButton from "../components/DeleteButton";
+import LoadingIndicator from "../components/LoadingIndicator";
+import StatusMessage from "../components/StatusMessage";
+import { useLocale } from "../contexts/LocaleContext";
+import showFormattedDate from "../utils/format-date";
+import {
+  archiveNote,
+  deleteNote,
+  getNote,
+  unarchiveNote,
+} from "../utils/network-data";
 
-class DetailPage extends Component {
-  formatDate = (dateString) => {
-    const options = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("id-ID", options);
-  };
+function DetailPage() {
+  const [note, setNote] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorKey, setErrorKey] = useState("");
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { locale, t } = useLocale();
 
-  handleDelete = (id) => {
-    this.props.onDelete(id);
-    this.props.navigate("/");
-  };
+  const loadNote = useCallback(
+    async (showLoader = true) => {
+      if (showLoader) {
+        setLoading(true);
+      }
 
-  handleArchive = (id) => {
-    this.props.onArchive(id);
-    this.props.navigate("/");
-  };
+      setErrorKey("");
 
-  render() {
-    const { id } = this.props.params;
-    const { notes } = this.props;
+      const response = await getNote(id);
 
-    const note = notes.find((note) => note.id === id);
+      if (response.error) {
+        setNote(null);
+        setErrorKey("noteNotFound");
+        setLoading(false);
+        return;
+      }
 
-    if (!note) {
-      return (
-        <div className="page">
-          <div className="detail-page__not-found">
-            <h2>Catatan tidak ditemukan</h2>
-            <button
-              className="btn btn-primary"
-              onClick={() => this.props.navigate("/")}
-            >
-              Kembali ke Beranda
-            </button>
-          </div>
-        </div>
-      );
+      setNote(response.data);
+      setLoading(false);
+    },
+    [id]
+  );
+
+  useEffect(() => {
+    // Initial page fetch is intentionally triggered from the route lifecycle.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadNote(false);
+  }, [loadNote]);
+
+  const handleDelete = async (noteId) => {
+    setLoading(true);
+    const response = await deleteNote(noteId);
+
+    if (response.error) {
+      alert(t("deleteFailed"));
+      setLoading(false);
+      return;
     }
 
+    navigate(note?.archived ? "/archives" : "/", { replace: true });
+  };
+
+  const handleArchive = async (noteId) => {
+    setLoading(true);
+    const response = note?.archived
+      ? await unarchiveNote(noteId)
+      : await archiveNote(noteId);
+
+    if (response.error) {
+      alert(note?.archived ? t("unarchiveFailed") : t("archiveFailed"));
+      setLoading(false);
+      return;
+    }
+
+    navigate(note?.archived ? "/" : "/archives", { replace: true });
+  };
+
+  if (loading) {
+    return <LoadingIndicator message={t("loadingNote")} />;
+  }
+
+  if (!note) {
     return (
       <div className="page">
-        <div className="detail-page">
-          <h1 className="detail-page__title">{note.title}</h1>
-          <p className="detail-page__date">{this.formatDate(note.createdAt)}</p>
-          <div className="detail-page__body">{parser(note.body)}</div>
-          <div className="detail-page__actions">
-            <ArchiveButton
-              id={note.id}
-              archived={note.archived}
-              onArchive={this.handleArchive}
-            />
-            <DeleteButton id={note.id} onDelete={this.handleDelete} />
-          </div>
+        <div className="detail-page__not-found">
+          <StatusMessage
+            message={t(errorKey || "noteNotFound")}
+            variant="error"
+          />
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => navigate("/", { replace: true })}
+          >
+            {t("backToHome")}
+          </button>
         </div>
       </div>
     );
   }
+
+  return (
+    <div className="page">
+      <div className="detail-page">
+        <h1 className="detail-page__title">{note.title}</h1>
+        <p className="detail-page__date">
+          {showFormattedDate(note.createdAt, locale)}
+        </p>
+        <div className="detail-page__body">{parser(note.body)}</div>
+        <div className="detail-page__actions">
+          <ArchiveButton
+            id={note.id}
+            archived={note.archived}
+            onArchive={handleArchive}
+          />
+          <DeleteButton id={note.id} onDelete={handleDelete} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-DetailPage.propTypes = {
-  notes: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      body: PropTypes.string.isRequired,
-      createdAt: PropTypes.string.isRequired,
-      archived: PropTypes.bool.isRequired,
-    })
-  ).isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onArchive: PropTypes.func.isRequired,
-  params: PropTypes.object.isRequired,
-  navigate: PropTypes.func.isRequired,
-};
-
-const DetailPageWithRouter = withRouter(DetailPage);
-export default DetailPageWithRouter;
+export default DetailPage;

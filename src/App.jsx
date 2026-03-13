@@ -1,100 +1,145 @@
-import { Component } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Route, Routes } from "react-router-dom";
+import LoadingIndicator from "./components/LoadingIndicator";
 import Navigation from "./components/Navigation";
-import HomePage from "./pages/HomePage";
-import DetailPage from "./pages/DetailPage";
+import { useLocale } from "./contexts/LocaleContext";
 import AddNotePage from "./pages/AddNotePage";
 import ArchivePage from "./pages/ArchivePage";
+import DetailPage from "./pages/DetailPage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import RegisterPage from "./pages/RegisterPage";
+import { ProtectedRoute, PublicRoute } from "./routes/AccessRoutes";
 import {
-  getAllNotes,
-  getActiveNotes,
-  getArchivedNotes,
-  addNote,
-  deleteNote,
-  archiveNote,
-  unarchiveNote,
-} from "./utils/local-data";
+  getAccessToken,
+  getUserLogged,
+  putAccessToken,
+  removeAccessToken,
+} from "./utils/network-data";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      notes: getAllNotes(),
-    };
-  }
+function App() {
+  const [authUser, setAuthUser] = useState(null);
+  const [initializingAuth, setInitializingAuth] = useState(true);
+  const { t } = useLocale();
 
-  handleAddNote = ({ title, body }) => {
-    addNote({ title, body });
-    this.setState({ notes: getAllNotes() });
-  };
+  useEffect(() => {
+    let isMounted = true;
 
-  handleDeleteNote = (id) => {
-    deleteNote(id);
-    this.setState({ notes: getAllNotes() });
-  };
+    async function bootstrapAuth() {
+      if (!getAccessToken()) {
+        if (isMounted) {
+          setInitializingAuth(false);
+        }
+        return;
+      }
 
-  handleArchiveNote = (id) => {
-    const note = this.state.notes.find((note) => note.id === id);
-    if (note.archived) {
-      unarchiveNote(id);
-    } else {
-      archiveNote(id);
+      const response = await getUserLogged();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (response.error) {
+        removeAccessToken();
+        setAuthUser(null);
+      } else {
+        setAuthUser(response.data);
+      }
+
+      setInitializingAuth(false);
     }
-    this.setState({ notes: getAllNotes() });
+
+    bootstrapAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleLoginSuccess = async (accessToken) => {
+    putAccessToken(accessToken);
+
+    const response = await getUserLogged();
+
+    if (response.error) {
+      removeAccessToken();
+      throw new Error("Failed to fetch authenticated user");
+    }
+
+    setAuthUser(response.data);
   };
 
-  render() {
-    const activeNotes = getActiveNotes();
-    const archivedNotes = getArchivedNotes();
+  const handleLogout = () => {
+    removeAccessToken();
+    setAuthUser(null);
+  };
 
-    return (
-      <Router>
-        <div className="app">
-          <Navigation />
-          <main className="main-content">
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <HomePage
-                    notes={activeNotes}
-                    onDelete={this.handleDeleteNote}
-                    onArchive={this.handleArchiveNote}
-                  />
-                }
-              />
-              <Route
-                path="/notes/:id"
-                element={
-                  <DetailPage
-                    notes={this.state.notes}
-                    onDelete={this.handleDeleteNote}
-                    onArchive={this.handleArchiveNote}
-                  />
-                }
-              />
-              <Route
-                path="/notes/new"
-                element={<AddNotePage onAddNote={this.handleAddNote} />}
-              />
-              <Route
-                path="/archives"
-                element={
-                  <ArchivePage
-                    notes={archivedNotes}
-                    onDelete={this.handleDeleteNote}
-                    onArchive={this.handleArchiveNote}
-                  />
-                }
-              />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
-    );
+  if (initializingAuth) {
+    return <LoadingIndicator message={t("loadingApp")} fullPage />;
   }
+
+  return (
+    <div className="app">
+      <Navigation authUser={authUser} onLogout={handleLogout} />
+      <main className="main-content">
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <PublicRoute authUser={authUser}>
+                <LoginPage onLoginSuccess={handleLoginSuccess} />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute authUser={authUser}>
+                <RegisterPage />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute authUser={authUser}>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/archives"
+            element={
+              <ProtectedRoute authUser={authUser}>
+                <ArchivePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes/new"
+            element={
+              <ProtectedRoute authUser={authUser}>
+                <AddNotePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes/:id"
+            element={
+              <ProtectedRoute authUser={authUser}>
+                <DetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="*"
+            element={<NotFoundPage homePath={authUser ? "/" : "/login"} />}
+          />
+        </Routes>
+      </main>
+    </div>
+  );
 }
 
 export default App;

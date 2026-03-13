@@ -1,109 +1,103 @@
-import { Component } from "react";
-import PropTypes from "prop-types";
-import withRouter from "../utils/withRouter";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import LoadingIndicator from "../components/LoadingIndicator";
+import StatusMessage from "../components/StatusMessage";
+import { useLocale } from "../contexts/LocaleContext";
+import { addNote } from "../utils/network-data";
 
-class AddNotePage extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      title: "",
-      body: "",
-      titleCharLimit: 50,
-    };
-    this.bodyInputRef = null;
-  }
+function AddNotePage() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [errorKey, setErrorKey] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { t } = useLocale();
+  const titleCharLimit = 50;
+  const remainingChars = titleCharLimit - title.length;
 
-  handleTitleChange = (e) => {
-    const value = e.target.value.slice(0, this.state.titleCharLimit);
-    this.setState({ title: value });
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  handleBodyInput = (e) => {
-    this.setState({ body: e.currentTarget.innerHTML });
-  };
-
-  handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (this.state.title.trim() === "" || this.state.body.trim() === "") {
-      alert("Judul dan isi catatan tidak boleh kosong!");
+    if (!title.trim() || !body.trim()) {
+      setErrorKey("emptyNoteValidation");
       return;
     }
 
-    this.props.onAddNote({
-      title: this.state.title,
-      body: this.state.body,
-    });
-    this.props.navigate("/");
+    setSubmitting(true);
+    setErrorKey("");
+
+    const response = await addNote({ title: title.trim(), body: body.trim() });
+
+    if (response.error) {
+      setErrorKey("addNoteFailed");
+      setSubmitting(false);
+      return;
+    }
+
+    navigate("/", { replace: true });
   };
 
-  render() {
-    const { title, titleCharLimit } = this.state;
-    const remainingChars = titleCharLimit - title.length;
-
-    return (
-      <div className="page">
-        <div className="add-note-page">
-          <h2 className="page__title">Buat Catatan Baru</h2>
-          <form className="add-note-page__form" onSubmit={this.handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="title" className="form-label">
-                Judul{" "}
-                <span className="char-limit">
-                  ({remainingChars} karakter tersisa)
-                </span>
-              </label>
-              <input
-                type="text"
-                id="title"
-                className="form-input"
-                placeholder="Contoh: Catatan penting hari ini"
-                value={title}
-                onChange={this.handleTitleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="body" className="form-label">
-                Isi Catatan
-              </label>
-              <div
-                id="body"
-                ref={(el) => {
-                  this.bodyInputRef = el;
-                }}
-                className="form-input form-input--editable"
-                contentEditable
-                onInput={this.handleBodyInput}
-                data-placeholder="Tuliskan catatan Anda di sini... (Anda bisa gunakan bold, italic, dll)"
-                suppressContentEditableWarning
-              />
-            </div>
-
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary">
-                Simpan Catatan
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => this.props.navigate("/")}
-              >
-                Batal
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
+  if (submitting) {
+    return <LoadingIndicator message={t("savingNote")} />;
   }
+
+  return (
+    <div className="page">
+      <div className="add-note-page">
+        <h2 className="page__title">{t("createNote")}</h2>
+        <StatusMessage message={errorKey ? t(errorKey) : ""} variant="error" />
+        <form className="add-note-page__form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="title" className="form-label">
+              {t("title")}{" "}
+              <span className="char-limit">
+                ({remainingChars} {t("remainingCharacters")})
+              </span>
+            </label>
+            <input
+              type="text"
+              id="title"
+              className="form-input"
+              placeholder={t("titlePlaceholder")}
+              value={title}
+              onChange={(event) =>
+                setTitle(event.target.value.slice(0, titleCharLimit))
+              }
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="body" className="form-label">
+              {t("body")}
+            </label>
+            <textarea
+              id="body"
+              className="form-input form-input--textarea"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              placeholder={t("bodyPlaceholder")}
+              rows="10"
+              required
+            />
+          </div>
+
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              {t("saveNote")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => navigate("/", { replace: true })}
+            >
+              {t("cancel")}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
-AddNotePage.propTypes = {
-  onAddNote: PropTypes.func.isRequired,
-  navigate: PropTypes.func.isRequired,
-};
-
-const AddNotePageWithRouter = withRouter(AddNotePage);
-export default AddNotePageWithRouter;
+export default AddNotePage;

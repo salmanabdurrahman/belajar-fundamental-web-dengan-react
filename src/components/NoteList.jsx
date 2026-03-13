@@ -5,7 +5,8 @@ function NoteList({
   notes,
   onDelete,
   onArchive,
-  emptyMessage = "Tidak ada catatan",
+  emptyMessage,
+  actionDisabled = false,
 }) {
   if (notes.length === 0) {
     return <div className="notes-list__empty">{emptyMessage}</div>;
@@ -19,6 +20,7 @@ function NoteList({
           {...note}
           onDelete={onDelete}
           onArchive={onArchive}
+          disabled={actionDisabled}
         />
       ))}
     </div>
@@ -26,18 +28,19 @@ function NoteList({
 }
 
 NoteList.propTypes = {
+  actionDisabled: PropTypes.bool,
+  emptyMessage: PropTypes.string.isRequired,
   notes: PropTypes.arrayOf(
     PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
+      archived: PropTypes.bool.isRequired,
       body: PropTypes.string.isRequired,
       createdAt: PropTypes.string.isRequired,
-      archived: PropTypes.bool.isRequired,
+      id: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
     })
   ).isRequired,
-  onDelete: PropTypes.func.isRequired,
   onArchive: PropTypes.func.isRequired,
-  emptyMessage: PropTypes.string,
+  onDelete: PropTypes.func.isRequired,
 };
 
 export default NoteList;

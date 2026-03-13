@@ -1,8 +1,20 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import parser from "html-react-parser";
-import DeleteButton from "./DeleteButton";
 import ArchiveButton from "./ArchiveButton";
+import DeleteButton from "./DeleteButton";
+import { useLocale } from "../contexts/LocaleContext";
+import showFormattedDate from "../utils/format-date";
+
+function createExcerpt(body, maxLength = 150) {
+  const plainText = body.replace(/<[^>]*>/g, "");
+
+  if (plainText.length <= maxLength) {
+    return plainText;
+  }
+
+  return `${plainText.slice(0, maxLength)}...`;
+}
 
 function NoteItem({
   id,
@@ -12,25 +24,10 @@ function NoteItem({
   archived,
   onDelete,
   onArchive,
+  disabled = false,
   showActions = true,
 }) {
-  const formatDate = (dateString) => {
-    const options = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("id-ID", options);
-  };
-
-  const truncateBody = (text, maxLength = 150) => {
-    if (text.length <= maxLength) {
-      return parser(text);
-    }
-
-    return parser(text.substring(0, maxLength) + "...");
-  };
+  const { locale } = useLocale();
 
   return (
     <div className="note-item">
@@ -38,28 +35,36 @@ function NoteItem({
         <Link to={`/notes/${id}`} className="note-item__title">
           {title}
         </Link>
-        <p className="note-item__date">{formatDate(createdAt)}</p>
-        <div className="note-item__body">{truncateBody(body)}</div>
+        <p className="note-item__date">
+          {showFormattedDate(createdAt, locale)}
+        </p>
+        <div className="note-item__body">{parser(createExcerpt(body))}</div>
       </div>
-      {showActions && (
+      {showActions ? (
         <div className="note-item__actions">
-          <ArchiveButton id={id} archived={archived} onArchive={onArchive} />
-          <DeleteButton id={id} onDelete={onDelete} />
+          <ArchiveButton
+            id={id}
+            archived={archived}
+            onArchive={onArchive}
+            disabled={disabled}
+          />
+          <DeleteButton id={id} onDelete={onDelete} disabled={disabled} />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
 
 NoteItem.propTypes = {
-  id: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
+  archived: PropTypes.bool.isRequired,
   body: PropTypes.string.isRequired,
   createdAt: PropTypes.string.isRequired,
-  archived: PropTypes.bool.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
+  id: PropTypes.string.isRequired,
   onArchive: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
   showActions: PropTypes.bool,
+  title: PropTypes.string.isRequired,
 };
 
 export default NoteItem;

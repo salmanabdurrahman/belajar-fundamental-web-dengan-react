@@ -1,20 +1,26 @@
 import PropTypes from "prop-types";
+import { useLocale } from "../contexts/LocaleContext";
 
-function ArchiveButton({ id, archived, onArchive }) {
+function ArchiveButton({ id, archived, onArchive, disabled = false }) {
+  const { t } = useLocale();
+
   return (
     <button
+      type="button"
       className="btn btn-archive"
       onClick={() => onArchive(id)}
-      title={archived ? "Pindahkan ke catatan aktif" : "Arsipkan catatan"}
+      title={archived ? t("activateNote") : t("archive")}
+      disabled={disabled}
     >
-      {archived ? "Aktifkan" : "Arsipkan"}
+      {archived ? t("unarchive") : t("archive")}
     </button>
   );
 }
 
 ArchiveButton.propTypes = {
-  id: PropTypes.string.isRequired,
   archived: PropTypes.bool.isRequired,
+  disabled: PropTypes.bool,
+  id: PropTypes.string.isRequired,
   onArchive: PropTypes.func.isRequired,
 };
 

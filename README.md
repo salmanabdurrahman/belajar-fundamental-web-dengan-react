@@ -1,102 +1,109 @@
-# Aplikasi Catatan Pribadi - React SPA
+# Aplikasi Catatan Pribadi V2
 
-Aplikasi Single Page Application (SPA) untuk mengelola catatan pribadi dengan fitur lengkap, dibangun menggunakan React dengan styling Neo-Brutalism.
+Single Page Application berbasis React untuk mengelola catatan pribadi dengan autentikasi, integrasi Dicoding Notes API, proteksi route, penggantian tema, dan penggantian bahasa. Proyek ini merupakan submission akhir phase 2 kelas **Belajar Fundamental Aplikasi Web dengan React**.
 
-## 🌐 Live Demo
+## Live Demo
 
 Anda dapat mencoba aplikasi ini secara langsung melalui link berikut:
 
 **Demo Aplikasi:**
 [https://belajar-fundamental-web-dengan-react.netlify.app](https://belajar-fundamental-web-dengan-react.netlify.app)
 
-## 🌟 Fitur
+## Fitur
 
-### Fitur Utama
+- Autentikasi pengguna (register, login, logout) dengan penyimpanan `accessToken` di `localStorage`
+- Integrasi **Dicoding Notes API** untuk melihat, menambah, menghapus, arsip, unarchive, dan detail catatan
+- Route protection untuk halaman notes setelah login
+- Theme switcher `light/dark` dengan persistensi
+- Language switcher `Indonesia/English`
+- Loading indicator saat fetch data dan submit form
+- Pencarian catatan berdasarkan judul
+- Halaman 404 untuk route tidak valid
 
-- ✅ **Multi-page Navigation** dengan React Router
-- ✅ **Daftar Catatan** - Menampilkan semua catatan aktif
-- ✅ **Detail Catatan** - Melihat detail lengkap catatan via URL parameter
-- ✅ **Tambah Catatan** - Form untuk membuat catatan baru dengan HTML formatting
-- ✅ **Hapus Catatan** - Menghapus catatan yang tidak diperlukan
-- ✅ **PropTypes Validation** - Validasi tipe data pada semua komponen
-- ✅ **Arsip Catatan** - Arsipkan dan aktifkan kembali catatan
-- ✅ **Halaman Arsip** - Halaman khusus untuk catatan yang diarsipkan
-- ✅ **Pencarian** - Cari catatan berdasarkan judul dengan query parameter
-- ✅ **Halaman 404** - Handle URL yang tidak valid
+## Teknologi
 
-## 🚀 Teknologi
+- React 19
+- React Router DOM 7
+- Vite
+- PropTypes
+- html-react-parser
+- ESLint
 
-- **React 19.2.0** - Library UI
-- **React Router 7.x** - Client-side routing
-- **PropTypes** - Runtime type checking
-- **html-react-parser** - Render HTML string
-- **Vite** - Build tool & dev server
-- **ESLint** - Code linting
+## Sumber Data
 
-## 📁 Struktur Folder
+API yang digunakan:
+
+[https://notes-api.dicoding.dev/v1](https://notes-api.dicoding.dev/v1)
+
+Request helper berada di `src/utils/network-data.js`.
+
+## Struktur Proyek
 
 ```
+
 src/
-├── components/          # Komponen UI reusable
-│   ├── Navigation.jsx
-│   ├── NoteItem.jsx
-│   ├── NoteList.jsx
-│   ├── SearchBar.jsx
-│   ├── DeleteButton.jsx
-│   └── ArchiveButton.jsx
-├── pages/              # Komponen halaman
-│   ├── HomePage.jsx
-│   ├── DetailPage.jsx
-│   ├── AddNotePage.jsx
-│   ├── ArchivePage.jsx
-│   └── NotFoundPage.jsx
-├── utils/              # Helper functions & data
-│   └── local-data.js
-├── styles/             # Styling
-│   └── style.css
-├── App.jsx            # Root component dengan routing
-└── main.jsx           # Entry point
+├── components/
+├── contexts/
+├── data/
+├── hooks/
+├── pages/
+├── routes/
+├── styles/
+├── utils/
+├── App.jsx
+└── main.jsx
+
 ```
 
-## 🛣️ Routing
+## Routing
 
-| Path         | Component    | Deskripsi                      |
-| ------------ | ------------ | ------------------------------ |
-| `/`          | HomePage     | Daftar catatan aktif           |
-| `/notes/new` | AddNotePage  | Form tambah catatan baru       |
-| `/notes/:id` | DetailPage   | Detail catatan berdasarkan ID  |
-| `/archives`  | ArchivePage  | Daftar catatan yang diarsipkan |
-| `/*`         | NotFoundPage | Halaman 404                    |
+| Path         | Akses  | Deskripsi            |
+| ------------ | ------ | -------------------- |
+| `/login`     | Publik | Halaman login        |
+| `/register`  | Publik | Halaman registrasi   |
+| `/`          | Privat | Daftar catatan aktif |
+| `/archives`  | Privat | Daftar catatan arsip |
+| `/notes/new` | Privat | Tambah catatan       |
+| `/notes/:id` | Privat | Detail catatan       |
+| `*`          | Publik | Halaman 404          |
 
-## 🔧 Instalasi & Menjalankan
+## Menjalankan Proyek
 
-### Prerequisites
+Prasyarat:
 
-- Node.js (v16 atau lebih baru)
-- npm atau yarn
-
-### Instalasi
+- Node.js 18+
+- npm
 
 ```bash
-# Install dependencies
 npm install
-
-# Jalankan development server
 npm run dev
-
-# Build untuk production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Lint code
-npm run lint
 ```
 
-Aplikasi akan berjalan di `http://localhost:5173` (atau port lain jika 5173 sedang digunakan).
+Aplikasi berjalan di `http://localhost:5173`.
 
-## 🤖 AI Attribution / Acknowledgements
+## Alur Penggunaan
+
+1. Registrasi akun di `/register`
+2. Login untuk mengakses halaman catatan
+3. Tambah dan kelola catatan dari halaman utama atau arsip
+4. Ubah tema dan bahasa melalui navigasi
+
+## Penyimpanan Lokal
+
+Aplikasi menyimpan data berikut di `localStorage`:
+
+- `accessToken`
+- `notes-app-theme`
+- `notes-app-locale`
+
+## Verifikasi
+
+```bash
+npm run lint
+npm run build
+```
+
+## AI Attribution / Acknowledgements
 
 Dalam proses pengembangan proyek ini, saya menggunakan bantuan **AI tools** sebagai alat pendukung dalam beberapa tahap pengembangan, antara lain:
 
